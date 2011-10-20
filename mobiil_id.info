@@ -3,6 +3,5 @@ description = "Estonian Mobiil-ID login support"
 name = "Mobiil-ID"
 package = "ID card authentication"
 project = "mobiil_id"
-version = "7.x-0.1"
-features[variable][] = ""
+version = "7.x-1.0-beta1"
 configure = admin/config/people/mobiil_id
