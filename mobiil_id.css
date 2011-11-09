@@ -1,26 +1,21 @@
-.mobiil-id-cancel-link, .block-user .form-item-mobiil-id-phone-number {
-    display: none;
+.mobiil-id-cancel-link, .block-user .form-item-mobiil-id-phone-number, .block-system .form-item-mobiil-id-phone-number {
+  display: none;
 }
-
 .mobiil-id-link {
-    display: block;
-    background-image: url('mobiil_id.gif');
-    background-repeat: no-repeat;
-    text-indent:-9999px;
-    width: 89px;
-    height: 33px;
-    cursor: pointer;
-    clear: both;
+  display: block;
+  background: transparent url('mobiil_id.gif') no-repeat;
+  text-indent: -9999px;
+  width: 89px;
+  height: 33px;
+  cursor: pointer;
+  clear: both;
 }
-
 .mobiil-id-fieldset {
-    border: none;
+  border: none;
 }
-
-.block-user .mobiil-id-show {
-    display: block;
+.block-user .mobiil-id-show, .block-system .mobiil-id-show {
+  display: block;
 }
-
-.block-user .mobiil-id-hide {
-    display: none;
+.block-user .mobiil-id-hide, .block-system .mobiil-id-hide {
+  display: none;
 }

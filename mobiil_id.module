@@ -168,7 +168,7 @@ function mobiil_id_user_form($form, $form_state, $user_info) {
     
     $form['submit'] = array(
         '#type' => 'submit',
-		'#value' => t('Save'),
+		    '#value' => t('Save'),
         '#submit' => array('mobiil_id_user_form_submit'),
     );
     
@@ -194,7 +194,11 @@ function mobiil_id_user_form_submit($form, $form_state) {
  * Implements hook_form_FORM_ID_alter().
  */
 function mobiil_id_form_user_login_block_alter(&$form, &$form_state) {
-    _mobiil_id_user_login_form_alter($form, $form_state);
+	if (variable_get('mobiil_id_alter_user_login_form', '0')) {
+		// @TODO: For some reason, needed to add this to make it work, but there's probably a better way
+		$form['#action'] = url('mobiil_id_login');
+		_mobiil_id_user_login_form_alter($form, $form_state);
+	}
 }
 
 /**
@@ -212,16 +216,14 @@ function _mobiil_id_user_login_form_alter(&$form, &$form_state) {
         $form['#attached']['js'] = array(
             drupal_get_path('module', 'mobiil_id') . '/status.js',
         );
-
+        
         if (!empty($form_state['input']['mobiil_id_phone_number'])) {
             $form['name']['#required'] = FALSE;
             $form['pass']['#required'] = FALSE;
             $form['#submit'] = array('mobiil_id_login_submit');
-            //unset($form['#submit']);
             unset($form['#validate']);
         }
-        $form['#action'] = url('mobiil_id_login');
-
+        
         $items = array();
         $items[] = array(
             'data' => '<a href="#">' . t('Log in using Mobiil-ID') . '</a>',
@@ -241,10 +243,11 @@ function _mobiil_id_user_login_form_alter(&$form, &$form_state) {
         $form['mobiil_id']['mobiil_id_links'] = array(
             '#theme' => 'item_list',
             '#items' => $items,
-            '#attributes' => array('class' => array('Mobiil-ID-links')),
+            '#attributes' => array('class' => array('mobiil-id-links')),
             '#weight' => 1,
         );
 
+		// Move "Create new account" and "Request new password" links down in order
         $form['links']['#weight'] = 2;
 
         $form['mobiil_id']['mobiil_id_phone_number'] = array(
@@ -255,7 +258,6 @@ function _mobiil_id_user_login_form_alter(&$form, &$form_state) {
             '#weight' => -1,
             '#description' => l(t('What is Mobiil-ID?'), 'http://mobiil.id.ee/', array('external' => TRUE)),
         );
-
         // Couldn't get this working, since there's no javascript callback option to start the query_status() js function
         /*  
         $form['actions']['submit']['#ajax'] = array(
@@ -404,6 +406,7 @@ function mobiil_id_login_submit($form, &$form_state) {
         $_SESSION['mobiil_id']['country'] = $result['UserCountry'];
     }
 
+    drupal_goto('mobiil_id_login');
 }
 
 /**
