@@ -213,9 +213,6 @@ function mobiil_id_form_user_login_alter(&$form, &$form_state) {
  */
 function _mobiil_id_user_login_form_alter(&$form, &$form_state) {
     if (variable_get('mobiil_id_alter_user_login_form', '0')) {
-        $form['#attached']['js'] = array(
-            drupal_get_path('module', 'mobiil_id') . '/status.js',
-        );
         
         if (!empty($form_state['input']['mobiil_id_phone_number'])) {
             $form['name']['#required'] = FALSE;
@@ -280,10 +277,6 @@ function mobiil_id_login_form($form, $form_state) {
     $form = array();
     
     if (!$user->uid) {
-        $form['#attached']['js'] = array(
-            drupal_get_path('module', 'mobiil_id') . '/status.js',
-        );
-
         $form['#action'] = url('mobiil_id_login');
         $form['#submit'] = array('mobiil_id_login_submit');
 
