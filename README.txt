@@ -15,6 +15,5 @@ use the phone numbers listed here: http://www.openxades.org/dds_test_phone_numbe
    3. Help hook for the module
    4. Create field_firstname, field_lastname fields for user
    5. Analyze error messages and output the corrent error in mobiil_id_login() function
-   6. Show progress bar while waiting for the answer
-   7. Estonian localization
-   8. Better README file
+   6. Estonian localization
+   7. Better README file

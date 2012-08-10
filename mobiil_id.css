@@ -19,3 +19,13 @@
 .block-user .mobiil-id-hide, .block-system .mobiil-id-hide {
   display: none;
 }
+.mobiil-id-outstanding-transaction .mobiil-id-progress-bar {
+  padding: 10px;
+}
+.mobiil-id-status-wrapper {
+  padding: 10px;
+  text-align: center;
+}
+.mobiil-id-status-wrapper .mobiil-id-result {
+  font-weight: bold;
+}
