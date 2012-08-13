@@ -31,7 +31,7 @@ function et_mobiil_id_login_menu() {
     'description' => 'Get Mobiil-ID status',
     'access callback' => 'user_is_anonymous',
     'type' => MENU_CALLBACK,
-  );  
+  );
 
   $items['mobiil_id_login'] = array(
     'title' => 'Mobiil-ID login',
@@ -49,8 +49,8 @@ function et_mobiil_id_login_menu() {
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
     'type' => MENU_LOCAL_TASK,
-  );  
-  
+  );
+
 	return $items;
 }
 
@@ -409,6 +409,8 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
  * @return string description
  */
 function et_mobiil_id_login_login_page() {
+  $GLOBALS['conf']['cache'] = FALSE;
+
   if (@$_SESSION['mobiil_id']['status']) {
     drupal_add_js(drupal_get_path('module', 'et_mobiil_id_login') . '/status.js');
 
