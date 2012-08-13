@@ -20,7 +20,14 @@
   display: none;
 }
 .mobiil-id-outstanding-transaction .mobiil-id-progress-bar {
-  padding: 10px;
+  display: block;
+  background: transparent url('progress.gif') no-repeat;
+  width: 124px;
+  height: 24px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 .mobiil-id-status-wrapper {
   padding: 10px;

@@ -412,9 +412,14 @@ function et_mobiil_id_login_login_page() {
   if (@$_SESSION['mobiil_id']['status']) {
     drupal_add_js(drupal_get_path('module', 'et_mobiil_id_login') . '/status.js');
 
-    return '<div class="mobiil-id-instructions">' . t('Follow the instructions on your phone. Before entering your PIN code make sure the verification code given here matches the one on your phone screen. After successful login you will be automatically redirected to the next page.') . '</div>' .
-      '<div class="mobiil-id-status-wrapper"><div class="mobiil-id-verification-code">' . t('Verification code: !challenge', array('!challenge' => $_SESSION['mobiil_id']['challengeid'])) . '</div>' .
-      '<div class="mobiil-id-outstanding-transaction"><img class="mobiil-id-progress-bar" src="' . drupal_get_path('module', 'et_mobiil_id_login') . '/progress.gif" /></div><div class="mobiil-id-result"></div></div>';
+    return '<div class="mobiil-id-instructions">' . t('Follow the instructions on your phone. Before entering your PIN code make sure the verification code given here matches the one on your phone screen. After successful login you will be automatically redirected to the next page.') . '</div>
+      <div class="mobiil-id-status-wrapper">
+        <div class="mobiil-id-verification-code">' . t('Verification code: !challenge', array('!challenge' => $_SESSION['mobiil_id']['challengeid'])) . '</div>
+        <div class="mobiil-id-outstanding-transaction">
+          <div class="mobiil-id-progress-bar"></div>
+        </div>
+        <div class="mobiil-id-result"></div>
+      </div>';
   } else {
     // @TODO: Analyze error messages and output the corrent error
     //return $_SESSION['mobiil_id']['message'];
