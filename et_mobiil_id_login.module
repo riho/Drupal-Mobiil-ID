@@ -100,27 +100,53 @@ function et_mobiil_id_login_admin_form($form) {
   $form['mobiil_id']['mobiil_id_service_name'] = array(
     '#type' => 'textfield',
     '#title' => t('Service name'),
-    '#description' => t('Name of your Mobiil-ID service. For test server you can use the service name "Testimine". To register your own service visit the web site of !name at !url.', array('!name' => 'AS Sertifitseerimiskeskus', '!url' => l('http://www.sk.ee', 'http://www.sk.ee'))),
+    '#description' => t('Name of your Mobiil-ID service. With the OpenXAdES test server you can use the service name "Testimine", but do not use it for a production site! To register your own service visit the web site of !name at !url.', array('!name' => 'AS Sertifitseerimiskeskus', '!url' => l('http://www.sk.ee', 'http://www.sk.ee'))),
     '#default_value' => variable_get('mobiil_id_service_name', 'Testimine'),
   );  
 
-  // @TODO: Add possibility to assign by different site languages
-  $form['mobiil_id']['mobiil_id_language'] = array(
-    '#type' => 'select',
-    '#title' => t('Language'),
-    '#description' => t('Language of the message sent to users phone when authenticating.'),
-    '#default_value' => variable_get('mobiil_id_language', 'EST'),
-    '#options' => array('EST' => 'EST', 'ENG' => 'ENG', 'RUS' => 'RUS'),
-  );
+  // Locale module is not enabled, let the admin pick the language of the service
+  if (!module_exists('locale')) {
+    $form['mobiil_id']['mobiil_id_language'] = array(
+      '#type' => 'select',
+      '#title' => t('Language'),
+      '#description' => t('Language of the message sent to users phone when authenticating. Enable Locale module for more options.'),
+      '#default_value' => variable_get('mobiil_id_language', 'EST'),
+      '#options' => array('EST' => 'Estonian', 'ENG' => 'English', 'RUS' => 'Russian'),
+    );
 
-  // @TODO: Add possibility to assign by different site languages
-  $form['mobiil_id']['mobiil_id_message'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Message'),
-    '#description' => t('Additional message sent to users phone when authenticating. Can be left empty since the Mobiil-ID service sends a message anyway. Maximum length of the message is 40 characters.'),
-    '#default_value' => variable_get('mobiil_id_message', ''),
-    '#maxlength' => 40,
-  );
+    $form['mobiil_id']['mobiil_id_message'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Message'),
+      '#description' => t('Additional message sent to users phone when authenticating. Can be left empty since the Mobiil-ID service sends a message anyway. Maximum length of the message is 40 characters.'),
+      '#default_value' => variable_get('mobiil_id_message', ''),
+      '#maxlength' => 40,
+    );
+  } else {
+    // Mobiil-ID service supports only 3 languages, so the following fields are hardcoded
+    $form['mobiil_id']['mobiil_id_message_et'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Estonian message'),
+      '#description' => t('Additional message sent to users phone when authenticating in estonian. Can be left empty since the Mobiil-ID service sends a message anyway. Maximum length of the message is 40 characters.'),
+      '#default_value' => variable_get('mobiil_id_message_et', ''),
+      '#maxlength' => 40,
+    );
+
+    $form['mobiil_id']['mobiil_id_message_en'] = array(
+      '#type' => 'textfield',
+      '#title' => t('English message'),
+      '#description' => t('Additional message sent to users phone when authenticating in english. Default for all languages except estonian and russian. Maximum length of the message is 40 characters.'),
+      '#default_value' => variable_get('mobiil_id_message_en', ''),
+      '#maxlength' => 40,
+    );
+
+    $form['mobiil_id']['mobiil_id_message_ru'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Russian message'),
+      '#description' => t('Additional message sent to users phone when authenticating in russian. Maximum length of the message is 40 characters.'),
+      '#default_value' => variable_get('mobiil_id_message_ru', ''),
+      '#maxlength' => 40,
+    );
+  }
 
   $form['mobiil_id']['mobiil_id_create_new_user'] = array(
     '#type' => 'checkbox',
@@ -371,13 +397,33 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
     )
   );
 
+  if (module_exists('locale')) {
+    // If the locale module is enabled, set the message language based on what language user is in
+    // The Mobiil-ID service language codes are different from Drupal's
+    global $language;
+    if ($language->language == 'et') {
+      $mobiil_id_language = 'EST';
+      $mobiil_id_message = variable_get('mobiil_id_message_et', '');
+    } elseif ($language->language == 'ru') {
+      $mobiil_id_language = 'RUS';
+      $mobiil_id_message = variable_get('mobiil_id_message_ru', '');
+    // All other languages will use the english message
+    } else {
+      $mobiil_id_language = 'ENG';
+      $mobiil_id_message = variable_get('mobiil_id_message_en', '');
+    }
+  } else {
+    $mobiil_id_language = variable_get('mobiil_id_language', 'EST');
+    $mobiil_id_message = variable_get('mobiil_id_message', '');
+  }
+
   $param = array(	
     'IDCode' => '',
     'Country' => '',
     'PhoneNo' => $phone_nr,
-    'Language' => variable_get('mobiil_id_language', 'EST'),
+    'Language' => $mobiil_id_language,
     'ServiceName' => variable_get('mobiil_id_service_name', 'Testimine'),
-    'MessageToDisplay' => variable_get('mobiil_id_message', ''),
+    'MessageToDisplay' => $mobiil_id_message,
     'SPChallenge' => '12345678901234567890',
     'MessagingMode' => "asynchClientServer",
   );
@@ -437,7 +483,7 @@ function et_mobiil_id_login_login_page() {
       300 => t('Phone related error. Please try again or contact your service provider for further details.'),
       301 => t('The inserted phone number doesn\'t have a valid Mobiil-ID contract.'),
       302 => t('Your certificate is not valid.'),
-      303 => t('Mobiil-ID service has not been activate for your phone number. To activate the service visit !link', array('!link' => l('http://mobiil.id.ee', 'http://mobiil.id.ee'))),
+      303 => t('Mobiil-ID service has not been activate for your phone number. To activate the service visit !link.', array('!link' => l('http://mobiil.id.ee', 'http://mobiil.id.ee'))),
     );
 
     $error_message = '';
