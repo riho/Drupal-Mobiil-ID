@@ -359,7 +359,7 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
   
   trim($phone_nr);
   if (substr($phone_nr, 1) != '+') {
-    // Add the area code to the phone number, if not entered
+    // Add the estonian area code to the phone number, if not entered
     $phone_nr = '+372' . $phone_nr;
   }
 
@@ -386,7 +386,9 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
 
   if (is_soap_fault($result)) {
     $_SESSION['mobiil_id'] = array();
-    $_SESSION['mobiil_id']['message'] = $result->detail->message;
+    // Commented it out since the message is not displayed
+    // $_SESSION['mobiil_id']['message'] = $result->detail->message;
+    $_SESSION['mobiil_id']['faultstring'] = $result->faultstring;
     $_SESSION['mobiil_id']['status'] = false;
   } elseif ($result['Status'] == 'OK') {
     $_SESSION['mobiil_id'] = array();
@@ -414,6 +416,7 @@ function et_mobiil_id_login_login_page() {
   if (@$_SESSION['mobiil_id']['status']) {
     drupal_add_js(drupal_get_path('module', 'et_mobiil_id_login') . '/status.js');
 
+    // @TODO: Make a template file for this
     return '<div class="mobiil-id-instructions">' . t('Follow the instructions on your phone. Before entering your PIN code make sure the verification code given here matches the one on your phone screen. After successful login you will be automatically redirected to the next page.') . '</div>
       <div class="mobiil-id-status-wrapper">
         <div class="mobiil-id-verification-code">' . t('Verification code: !challenge', array('!challenge' => $_SESSION['mobiil_id']['challengeid'])) . '</div>
@@ -423,9 +426,29 @@ function et_mobiil_id_login_login_page() {
         <div class="mobiil-id-result"></div>
       </div>';
   } else {
-    // @TODO: Analyze error messages and output the corrent error
-    //return $_SESSION['mobiil_id']['message'];
-    return '<div class="mobiil-id-error">' . t('Error in Mobiil-ID service. Please try again.') . '</div>';
+    $mobiil_id_errors = array(
+      100 => t('Error in Mobiil-ID service. Please contact the site administrator for further details.'),
+      101 => t('One of the required input parameters is faulty. Please contact the site administrator for further details.'),
+      102 => t('One of the required input parameters is missing. Please contact the site administrator for further details.'),
+      103 => t('This site has no access to Mobiil-ID service. Please contact the site administrator for further details.'),
+      200 => t('Error in Mobiil-ID service. Please try again.'),
+      201 => t('Your certificate was not found.'),
+      202 => t('Unable to verify the validity of your certificate.'),
+      300 => t('Phone related error. Please try again or contact your service provider for further details.'),
+      301 => t('The inserted phone number doesn\'t have a valid Mobiil-ID contract.'),
+      302 => t('Your certificate is not valid.'),
+      303 => t('Mobiil-ID service has not been activate for your phone number. To activate the service visit !link', array('!link' => l('http://mobiil.id.ee', 'http://mobiil.id.ee'))),
+    );
+
+    $error_message = '';
+    if (array_key_exists($_SESSION['mobiil_id']['faultstring'], $mobiil_id_errors)) {
+      $error_message = $mobiil_id_errors[$_SESSION['mobiil_id']['faultstring']];
+    } else {
+      // Unknown/undocumented error
+      $error_message = t('Unknown error in Mobiil-ID service. Please try again.');
+    }
+
+    return '<div class="mobiil-id-error">' . $error_message . '</div>';
   }
 }
 
