@@ -20,9 +20,9 @@ function et_mobiil_id_login_menu() {
     'title' => 'Mobiil-ID',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('et_mobiil_id_login_admin_form'),
-    'description' => 'Configure Mobiil-ID settings',
+    'description' => 'Configure Mobiil-ID settings.',
     'access arguments' => array('administer mobiil_id'),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_NORMAL_ITEM,
   );
   
   $items['mobiil_id_status'] = array(
