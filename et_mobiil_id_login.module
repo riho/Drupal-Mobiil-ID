@@ -24,7 +24,7 @@ function et_mobiil_id_login_menu() {
     'access arguments' => array('administer mobiil_id'),
     'type' => MENU_NORMAL_ITEM,
   );
-  
+
   $items['mobiil_id_status'] = array(
     'title' => 'Mobiil-ID status',
     'page callback' => 'et_mobiil_id_login_status',
@@ -40,7 +40,7 @@ function et_mobiil_id_login_menu() {
     'access callback' => 'user_is_anonymous',
     'type' => MENU_CALLBACK,
   );
-  
+
   $items['user/%user/mobiil_id'] = array(
     'title' => 'Mobiil-ID',
     'page callback' => 'drupal_get_form',
@@ -80,7 +80,7 @@ function et_mobiil_id_login_block_view($delta = '') {
     $block['subject'] = t('Mobiil-ID login');
     $block['content'] = drupal_get_form('et_mobiil_id_login_login_form');
   }
-  
+
   return $block;
 }
 
@@ -102,7 +102,7 @@ function et_mobiil_id_login_admin_form($form) {
     '#title' => t('Service name'),
     '#description' => t('Name of your Mobiil-ID service. With the OpenXAdES test server you can use the service name "Testimine", but do not use it for a production site! To register your own service visit the web site of !name at !url.', array('!name' => 'AS Sertifitseerimiskeskus', '!url' => l('http://www.sk.ee', 'http://www.sk.ee'))),
     '#default_value' => variable_get('mobiil_id_service_name', 'Testimine'),
-  );  
+  );
 
   // Locale module is not enabled, let the admin pick the language of the service
   if (!module_exists('locale')) {
@@ -330,26 +330,26 @@ function et_mobiil_id_login_login_form($form, $form_state) {
 function et_mobiil_id_login_status() {
   drupal_add_http_header('Content-Type', 'application/javascript');
   
-	if ($_SESSION['mobiil_id']['sesscode']) {
+  if ($_SESSION['mobiil_id']['sesscode']) {
 
-		$client = new SoapClient(
-			variable_get('mobiil_id_server', 'https://www.openxades.org:8443/?wsdl'),
-			array(
+    $client = new SoapClient(
+      variable_get('mobiil_id_server', 'https://www.openxades.org:8443/?wsdl'),
+      array(
         'trace' => true,
-				'exceptions' => false
+        'exceptions' => false
       )
-		);
+    );
 
-		$status_param = array(	
-			'Sesscode' => $_SESSION['mobiil_id']['sesscode'],
-			'WaitSignature' => FALSE,
-		);
+    $status_param = array(	
+      'Sesscode' => $_SESSION['mobiil_id']['sesscode'],
+      'WaitSignature' => FALSE,
+    );
 
-		$status_result = $client->__soapCall('GetMobileAuthenticateStatus', $status_param);
+    $status_result = $client->__soapCall('GetMobileAuthenticateStatus', $status_param);
 
-		if (@$status_result['Status'] == 'USER_AUTHENTICATED') {
-			$_SESSION['mobiil_id']['logged_in'] = true;
-      
+    if (@$status_result['Status'] == 'USER_AUTHENTICATED') {
+      $_SESSION['mobiil_id']['logged_in'] = true;
+
       if (variable_get('mobiil_id_create_new_user', '1')) {
         user_external_login_register($_SESSION['mobiil_id']['idcode'], 'id_card');
       } else {
@@ -369,12 +369,12 @@ function et_mobiil_id_login_status() {
       //  'field_firstname' => $_SESSION['mobiil_id']['firstname'],
       //  'field_lastname' => $_SESSION['mobiil_id']['lastname'],
       unset($_SESSION['mobiil_id']);
-		}
+    }
 
-		print drupal_json_encode($status_result);
-	} else {
-		print drupal_json_encode(array('error' => 'Session error!'));
-	}
+    print drupal_json_encode($status_result);
+  } else {
+    print drupal_json_encode(array('error' => 'Session error!'));
+  }
 }
 
 /**
@@ -382,7 +382,7 @@ function et_mobiil_id_login_status() {
  */
 function et_mobiil_id_login_login_submit($form, &$form_state) {
   $phone_nr = $form['mobiil_id']['mobiil_id_phone_number']['#value'];
-  
+
   trim($phone_nr);
   if (substr($phone_nr, 1) != '+') {
     // Add the estonian area code to the phone number, if not entered
@@ -417,6 +417,13 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
     $mobiil_id_message = variable_get('mobiil_id_message', '');
   }
 
+  // Generation of the random 10 byte hex SPChallenge key as stated in DigiDocService specification
+  $spchallenge = '';
+  $hex_chars = '0123456789ABCDEF';
+  for ($i = 0; $i < 20; $i++) {
+    $spchallenge .= $hex_chars[rand(0, strlen($hex_chars) - 1)];
+  }
+
   $param = array(	
     'IDCode' => '',
     'Country' => '',
@@ -424,7 +431,7 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
     'Language' => $mobiil_id_language,
     'ServiceName' => variable_get('mobiil_id_service_name', 'Testimine'),
     'MessageToDisplay' => $mobiil_id_message,
-    'SPChallenge' => '12345678901234567890',
+    'SPChallenge' => $spchallenge,
     'MessagingMode' => "asynchClientServer",
   );
 
@@ -438,13 +445,17 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
     $_SESSION['mobiil_id']['status'] = false;
   } elseif ($result['Status'] == 'OK') {
     $_SESSION['mobiil_id'] = array();
-    $_SESSION['mobiil_id']['status'] = true;
-    $_SESSION['mobiil_id']['challengeid'] = $result['ChallengeID'];
-    $_SESSION['mobiil_id']['sesscode'] = $result['Sesscode'];
-    $_SESSION['mobiil_id']['idcode'] = $result['UserIDCode'];
-    $_SESSION['mobiil_id']['firstname'] = $result['UserGivenname'];
-    $_SESSION['mobiil_id']['lastname'] = $result['UserSurname'];
-    $_SESSION['mobiil_id']['country'] = $result['UserCountry'];
+    // Verify the SPChallenge
+    if (substr($result['Challenge'], 0, 20) == $spchallenge) {
+      $_SESSION['mobiil_id']['status'] = true;
+      $_SESSION['mobiil_id']['challengeid'] = $result['ChallengeID'];
+      $_SESSION['mobiil_id']['sesscode'] = $result['Sesscode'];
+      $_SESSION['mobiil_id']['idcode'] = $result['UserIDCode'];
+      $_SESSION['mobiil_id']['firstname'] = $result['UserGivenname'];
+      $_SESSION['mobiil_id']['lastname'] = $result['UserSurname'];
+      $_SESSION['mobiil_id']['country'] = $result['UserCountry'];
+      $_SESSION['mobiil_id']['spchallenge'] = $result['Challenge'];
+    }
   }
 
   drupal_goto('mobiil_id_login');
@@ -506,9 +517,9 @@ function et_mobiil_id_login_block_view_alter(&$data, $block) {
   }
 
   global $user;
-  
+
   if (($block->module == 'mobiil_id' && $block->delta == 'mobiil_id') && ($_GET['q'] == 'id_card_login' || $_GET['q'] == 'mobiil_id_login' || $user->uid)) {
     $data = array();
   }
-  
+
 }
