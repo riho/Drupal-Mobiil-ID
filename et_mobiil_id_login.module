@@ -61,7 +61,7 @@ function et_mobiil_id_login_menu() {
  */
  function et_mobiil_id_login_block_info() {
   $blocks['mobiil_id'] = array(
-    'info' => t('Mobiil-ID login'), 
+    'info' => t('Mobiil-ID login'),
     'cache' => DRUPAL_NO_CACHE,
   );
 
@@ -160,7 +160,7 @@ function et_mobiil_id_login_admin_form($form) {
     '#title' => t('Attach to default user login form'),
     '#description' => t('Alters the default Drupal user login form and adds a button to log in with Mobiil-ID.'),
     '#default_value' => variable_get('mobiil_id_alter_user_login_form', '0'),
-  );  
+  );
 
   // @TODO: Setting default role/group for new users
 
@@ -197,7 +197,7 @@ function et_mobiil_id_login_user_form($form, $form_state, $user_info) {
     '#value' => t('Save'),
     '#submit' => array('mobiil_id_user_form_submit'),
   );
-  
+
   $form['mobiil_id_uid'] = array(
     '#type' => 'value',
     '#value' => $user_info->uid,
@@ -232,6 +232,17 @@ function et_mobiil_id_login_form_user_login_block_alter(&$form, &$form_state) {
  */
 function et_mobiil_id_login_form_user_login_alter(&$form, &$form_state) {
   _mobiil_id_user_login_form_alter($form, $form_state);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function et_mobiil_id_login_theme() {
+  return array(
+    'et_mobiil_id_login_page' => array(
+      'template' => 'et_mobiil_id_login',
+    ),
+  );
 }
 
 /**
@@ -282,7 +293,7 @@ function _mobiil_id_user_login_form_alter(&$form, &$form_state) {
       '#description' => l(t('What is Mobiil-ID?'), 'http://mobiil.id.ee/', array('external' => TRUE)),
     );
     // Couldn't get this working, since there's no javascript callback option to start the query_status() js function
-    /*  
+    /*
     $form['actions']['submit']['#ajax'] = array(
       'callback' => 'mobiil_id_login_callback',
       'method' => 'replace',
@@ -301,7 +312,7 @@ function et_mobiil_id_login_login_form($form, $form_state) {
   global $user;
 
   $form = array();
-  
+
   if (!$user->uid) {
     $form['#action'] = url('mobiil_id_login');
     $form['#submit'] = array('mobiil_id_login_submit');
@@ -320,7 +331,7 @@ function et_mobiil_id_login_login_form($form, $form_state) {
       '#value' => t('Log in'),
     );
   }
-  
+
   return $form;
 }
 
@@ -329,7 +340,7 @@ function et_mobiil_id_login_login_form($form, $form_state) {
  */
 function et_mobiil_id_login_status() {
   drupal_add_http_header('Content-Type', 'application/javascript');
-  
+
   if ($_SESSION['mobiil_id']['sesscode']) {
 
     $client = new SoapClient(
@@ -340,7 +351,7 @@ function et_mobiil_id_login_status() {
       )
     );
 
-    $status_param = array(	
+    $status_param = array(
       'Sesscode' => $_SESSION['mobiil_id']['sesscode'],
       'WaitSignature' => FALSE,
     );
@@ -424,7 +435,7 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
     $spchallenge .= $hex_chars[rand(0, strlen($hex_chars) - 1)];
   }
 
-  $param = array(	
+  $param = array(
     'IDCode' => '',
     'Country' => '',
     'PhoneNo' => $phone_nr,
@@ -464,7 +475,7 @@ function et_mobiil_id_login_login_submit($form, &$form_state) {
 /**
  * Outputs the login page with instuctions or error in case Mobiil-ID service failed
  * (ie. wrong or non-registered Mobiil-ID phone number)
- * 
+ *
  * @return string description
  */
 function et_mobiil_id_login_login_page() {
@@ -474,14 +485,18 @@ function et_mobiil_id_login_login_page() {
     drupal_add_js(drupal_get_path('module', 'et_mobiil_id_login') . '/status.js');
 
     // @TODO: Make a template file for this
-    return '<div class="mobiil-id-instructions">' . t('Follow the instructions on your phone. Before entering your PIN code make sure the verification code given here matches the one on your phone screen. After successful login you will be automatically redirected to the next page.') . '</div>
-      <div class="mobiil-id-status-wrapper">
-        <div class="mobiil-id-verification-code">' . t('Verification code: !challenge', array('!challenge' => $_SESSION['mobiil_id']['challengeid'])) . '</div>
-        <div class="mobiil-id-outstanding-transaction">
-          <div class="mobiil-id-progress-bar"></div>
-        </div>
-        <div class="mobiil-id-result"></div>
-      </div>';
+    return theme('et_mobiil_id_login_page',
+      array(
+        'instructions' => t('Follow the instructions on your phone. Before
+                            entering your PIN code make sure the verification
+                            code given here matches the one on your phone
+                            screen. After successful login you will be
+                            automatically redirected to the next page.'),
+        'verification_code' => t('Verification code: !challenge',
+                                 array('!challenge' => $_SESSION['mobiil_id']['challengeid']))
+      )
+    );
+
   } else {
     $mobiil_id_errors = array(
       100 => t('Error in Mobiil-ID service. Please contact the site administrator for further details.'),
