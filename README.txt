@@ -14,6 +14,5 @@ use the phone numbers listed here: http://www.openxades.org/dds_test_phone_numbe
    2. Configuration option to set the default role/group for new users created with the module
    3. Help hook for the module
    4. Create field_firstname, field_lastname fields for user
-   5. Make a template for the status page
-   6. Estonian localization
-   7. Better README file
+   5. Estonian localization
+   6. Better README file
