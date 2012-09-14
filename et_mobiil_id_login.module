@@ -387,6 +387,8 @@ function et_mobiil_id_login_status() {
         foreach (variable_get('mobiil_id_new_user_default_role', array()) as $value) {
           $user->roles[$value] = $all_user_roles[$value];
         }
+        // @TODO: All estonians have a @eesti.ee e-mail address, but should ask for confirmation as well
+        $user->mail = $_SESSION['mobiil_id']['idcode'] . '@eesti.ee';
         user_save($user, array('roles' => $user->roles));
       } else {
         $user_info = user_external_load($_SESSION['mobiil_id']['idcode'], 'id_card');
