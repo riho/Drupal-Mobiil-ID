@@ -152,7 +152,28 @@ function et_mobiil_id_login_admin_form($form) {
     '#type' => 'checkbox',
     '#title' => t('Create new user on first login'),
     '#description' => t('If checked, a new user is created when it doesn\'t exist yet. Leave unchecked to deny Mobiil-ID access for unknown users.'),
-    '#default_value' => variable_get('mobiil_id_create_new_user', '1'),
+    '#default_value' => variable_get('mobiil_id_create_new_user', '0'),
+  );
+
+  // get all defined roles
+  $user_roles = user_roles();
+  // remove authenticated user role from the options
+  unset($user_roles[DRUPAL_AUTHENTICATED_RID]);
+  // remove anonymous user role from the options
+  unset($user_roles[DRUPAL_ANONYMOUS_RID]);
+
+  $form['mobiil_id']['mobiil_id_new_user_default_role'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Default role(s) of new users'),
+    '#description' => t('The new users created on first login are given the these roles in addition to "authenticated user" role.'),
+    '#options' => $user_roles,
+    '#default_value' => variable_get('mobiil_id_new_user_default_role', array()),
+    // only visible when mobiil_id_create_new_user checkbox is checked
+    '#states' => array(
+      'visible' => array(
+        ':input[name="mobiil_id_create_new_user"]' => array('checked' => TRUE),
+      ),
+    ),
   );
 
   $form['mobiil_id']['mobiil_id_alter_user_login_form'] = array(
@@ -161,8 +182,6 @@ function et_mobiil_id_login_admin_form($form) {
     '#description' => t('Alters the default Drupal user login form and adds a button to log in with Mobiil-ID.'),
     '#default_value' => variable_get('mobiil_id_alter_user_login_form', '0'),
   );
-
-  // @TODO: Setting default role/group for new users
 
   return system_settings_form($form);
 }
@@ -359,15 +378,20 @@ function et_mobiil_id_login_status() {
     $status_result = $client->__soapCall('GetMobileAuthenticateStatus', $status_param);
 
     if (@$status_result['Status'] == 'USER_AUTHENTICATED') {
+      global $user;
       $_SESSION['mobiil_id']['logged_in'] = true;
 
-      if (variable_get('mobiil_id_create_new_user', '1')) {
+      if (variable_get('mobiil_id_create_new_user', '0')) {
         user_external_login_register($_SESSION['mobiil_id']['idcode'], 'id_card');
+        $all_user_roles = user_roles();
+        foreach (variable_get('mobiil_id_new_user_default_role', array()) as $value) {
+          $user->roles[$value] = $all_user_roles[$value];
+        }
+        user_save($user, array('roles' => $user->roles));
       } else {
         $user_info = user_external_load($_SESSION['mobiil_id']['idcode'], 'id_card');
         // Creation of new users is disabled, so check if it exists
         if ($user_info) {
-          global $user;
           $user = $user_info;
           user_login_finalize();
         } else {
@@ -513,7 +537,7 @@ function et_mobiil_id_login_login_page() {
     );
 
     $error_message = '';
-    if (array_key_exists($_SESSION['mobiil_id']['faultstring'], $mobiil_id_errors)) {
+    if (isset($_SESSION['mobiil_id']) && isset($_SESSION['mobiil_id']['faultstring']) && array_key_exists($_SESSION['mobiil_id']['faultstring'], $mobiil_id_errors)) {
       $error_message = $mobiil_id_errors[$_SESSION['mobiil_id']['faultstring']];
     } else {
       // Unknown/undocumented error

@@ -11,8 +11,7 @@ use the phone numbers listed here: http://www.openxades.org/dds_test_phone_numbe
 
 @TODO list:
    1. Default user form alter option doesn't work well with OpenID module
-   2. Configuration option to set the default role/group for new users created with the module
-   3. Help hook for the module
-   4. Create field_firstname, field_lastname fields for user
-   5. Estonian localization
-   6. Better README file
+   2. Help hook for the module
+   3. Create field_firstname, field_lastname fields for user
+   4. Estonian localization
+   5. Better README file
