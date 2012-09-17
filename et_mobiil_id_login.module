@@ -241,7 +241,7 @@ function et_mobiil_id_login_user_form_submit($form, $form_state) {
 function et_mobiil_id_login_form_user_login_block_alter(&$form, &$form_state) {
   if (variable_get('mobiil_id_alter_user_login_form', '0')) {
     // @TODO: For some reason, needed to add this to make it work, but there's probably a better way
-    $form['#action'] = url('mobiil_id_login');
+    unset($form['#action']);
     _mobiil_id_user_login_form_alter($form, $form_state);
   }
 }
